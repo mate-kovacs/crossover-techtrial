@@ -53,6 +53,16 @@ public class PanelControllerTest {
     Assert.assertEquals(202,response.getStatusCode().value());
   }
 
+  @Test
+  public void testHourlyElectricityShouldBeSaved() throws Exception {
+    HttpEntity<Object> panel = getHttpEntity(
+            "{\"serial\": \"232323\", \"longitude\": \"54.123232\","
+                    + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
+    ResponseEntity<Panel> response = template.postForEntity(
+            "/api/panels/" + "232323" + "/hourly", panel, Panel.class);
+    Assert.assertEquals(200,response.getStatusCode().value());
+  }
+
   private HttpEntity<Object> getHttpEntity(Object body) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
