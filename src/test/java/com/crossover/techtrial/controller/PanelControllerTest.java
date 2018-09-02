@@ -1,5 +1,6 @@
 package com.crossover.techtrial.controller;
 
+import com.crossover.techtrial.model.HourlyElectricity;
 import com.crossover.techtrial.model.Panel;
 import org.junit.Assert;
 import org.junit.Before;
@@ -86,15 +87,15 @@ public class PanelControllerTest {
 
     @Test
     public void testHourlyElectricityShouldBeReturnedforPanel() throws Exception {
-        ResponseEntity<Page> response = template.getForEntity(
-                "/api/panels/" + "1234567890123456" + "/hourly", Page.class);
+        ResponseEntity<HourlyElectricity> response = template.getForEntity(
+                "/api/panels/" + "1234567890123456" + "/hourly", HourlyElectricity.class);
         Assert.assertEquals(200,response.getStatusCode().value());
     }
 
     @Test
     public void testHourlyElectricityShouldRespondErrorForInvalidPanelSerial() throws Exception {
-        ResponseEntity<Page> response = template.getForEntity(
-                "/api/panels/" + "9999999999999999" + "/hourly", Page.class);
+        ResponseEntity<HourlyElectricity> response = template.getForEntity(
+                "/api/panels/" + "9999999999999999" + "/hourly", HourlyElectricity.class);
         Assert.assertEquals(404,response.getStatusCode().value());
     }
 
