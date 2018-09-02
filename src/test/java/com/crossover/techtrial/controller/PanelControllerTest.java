@@ -46,7 +46,7 @@ public class PanelControllerTest {
   @Test
   public void testPanelShouldBeRegistered() throws Exception {
     HttpEntity<Object> panel = getHttpEntity(
-        "{\"serial\": \"232323\", \"longitude\": \"54.123232\"," 
+        "{\"serial\": \"1234567890123456\", \"longitude\": \"54.123232\","
             + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
     ResponseEntity<Panel> response = template.postForEntity(
         "/api/register", panel, Panel.class);
@@ -56,10 +56,10 @@ public class PanelControllerTest {
   @Test
   public void testHourlyElectricityShouldBeSaved() throws Exception {
     HttpEntity<Object> panel = getHttpEntity(
-            "{\"serial\": \"232323\", \"longitude\": \"54.123232\","
-                    + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
+            "{\"panel\": \"26\", \"generatedElectricity\": \"120\","
+                    + " \"readingAt\": \"2018-09-03T19:25:12.345\"}");
     ResponseEntity<Panel> response = template.postForEntity(
-            "/api/panels/" + "232323" + "/hourly", panel, Panel.class);
+            "/api/panels/" + "1234567890123456" + "/hourly", panel, Panel.class);
     Assert.assertEquals(200,response.getStatusCode().value());
   }
 
