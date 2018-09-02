@@ -53,6 +53,26 @@ public class PanelControllerTest {
     Assert.assertEquals(202,response.getStatusCode().value());
   }
 
+    @Test
+    public void testPanelShouldRespondWithErrorForTooLongSerial() throws Exception {
+        HttpEntity<Object> panel = getHttpEntity(
+                "{\"serial\": \"1234567890123456789\", \"longitude\": \"54.123232\","
+                        + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
+        ResponseEntity<Panel> response = template.postForEntity(
+                "/api/register", panel, Panel.class);
+        Assert.assertEquals(400,response.getStatusCode().value());
+    }
+
+    @Test
+    public void testPanelShouldRespondWithErrorForTooShortSerial() throws Exception {
+        HttpEntity<Object> panel = getHttpEntity(
+                "{\"serial\": \"12345678901234\", \"longitude\": \"54.123232\","
+                        + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
+        ResponseEntity<Panel> response = template.postForEntity(
+                "/api/register", panel, Panel.class);
+        Assert.assertEquals(400,response.getStatusCode().value());
+    }
+
   @Test
   public void testHourlyElectricityShouldBeSaved() throws Exception {
     HttpEntity<Object> panel = getHttpEntity(
