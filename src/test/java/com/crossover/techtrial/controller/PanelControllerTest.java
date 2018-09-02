@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -82,6 +83,20 @@ public class PanelControllerTest {
             "/api/panels/" + "1234567890123456" + "/hourly", panel, Panel.class);
     Assert.assertEquals(200,response.getStatusCode().value());
   }
+
+    @Test
+    public void testHourlyElectricityShouldBeReturnedforPanel() throws Exception {
+        ResponseEntity<Page> response = template.getForEntity(
+                "/api/panels/" + "1234567890123456" + "/hourly", Page.class);
+        Assert.assertEquals(200,response.getStatusCode().value());
+    }
+
+    @Test
+    public void testHourlyElectricityShouldRespondErrorForInvalidPanelSerial() throws Exception {
+        ResponseEntity<Page> response = template.getForEntity(
+                "/api/panels/" + "9999999999999999" + "/hourly", Page.class);
+        Assert.assertEquals(404,response.getStatusCode().value());
+    }
 
   private HttpEntity<Object> getHttpEntity(Object body) {
     HttpHeaders headers = new HttpHeaders();
