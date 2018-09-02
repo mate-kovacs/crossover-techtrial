@@ -1,0 +1,538 @@
+From 6a6785f5353bab61b6073e26e93efe173c7b4858 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Fri, 31 Aug 2018 19:18:31 +0200
+Subject: [PATCH 01/13] Added MySql database password.
+XOV: XO_0_0_1
+
+---
+ src/main/resources/application.properties | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+index c7cc890..46593e8 100644
+--- a/src/main/resources/application.properties
++++ b/src/main/resources/application.properties
+@@ -2,7 +2,7 @@
+ #Database connection Parameters
+ spring.datasource.url: jdbc:mysql://localhost:3306/crosssolar?createDatabaseIfNotExist=true&useSSL=false
+ spring.datasource.username=root
+-spring.datasource.password=
++spring.datasource.password=${PASSWORD}
+ spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+ 
+ spring.jpa.hibernate.ddl-auto=none
+-- 
+2.7.4
+
+
+From a57c1e72e6df5c1fae4939a13c58fc7897003602 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Fri, 31 Aug 2018 19:32:55 +0200
+Subject: [PATCH 02/13] Added test for saving hourly electricity.
+XOV: XO_0_0_1
+
+---
+ .../crossover/techtrial/controller/PanelControllerTest.java    | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+index a1deacf..9853b87 100644
+--- a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
++++ b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+@@ -53,6 +53,16 @@ public class PanelControllerTest {
+     Assert.assertEquals(202,response.getStatusCode().value());
+   }
+ 
++  @Test
++  public void testHourlyElectricityShouldBeSaved() throws Exception {
++    HttpEntity<Object> panel = getHttpEntity(
++            "{\"serial\": \"232323\", \"longitude\": \"54.123232\","
++                    + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
++    ResponseEntity<Panel> response = template.postForEntity(
++            "/api/panels/" + "232323" + "/hourly", panel, Panel.class);
++    Assert.assertEquals(200,response.getStatusCode().value());
++  }
++
+   private HttpEntity<Object> getHttpEntity(Object body) {
+     HttpHeaders headers = new HttpHeaders();
+     headers.setContentType(MediaType.APPLICATION_JSON);
+-- 
+2.7.4
+
+
+From f78f981faa28f35864b86b66eac05e6d2908f28e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 19:32:14 +0200
+Subject: [PATCH 03/13] Corrected test for hourly electricity saved with valid
+ test data.
+XOV: XO_0_0_1
+
+---
+ .../com/crossover/techtrial/controller/PanelControllerTest.java   | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+index 9853b87..b6a4146 100644
+--- a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
++++ b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+@@ -46,7 +46,7 @@ public class PanelControllerTest {
+   @Test
+   public void testPanelShouldBeRegistered() throws Exception {
+     HttpEntity<Object> panel = getHttpEntity(
+-        "{\"serial\": \"232323\", \"longitude\": \"54.123232\"," 
++        "{\"serial\": \"1234567890123456\", \"longitude\": \"54.123232\","
+             + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
+     ResponseEntity<Panel> response = template.postForEntity(
+         "/api/register", panel, Panel.class);
+@@ -56,10 +56,10 @@ public class PanelControllerTest {
+   @Test
+   public void testHourlyElectricityShouldBeSaved() throws Exception {
+     HttpEntity<Object> panel = getHttpEntity(
+-            "{\"serial\": \"232323\", \"longitude\": \"54.123232\","
+-                    + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
++            "{\"panel\": \"26\", \"generatedElectricity\": \"120\","
++                    + " \"readingAt\": \"2018-09-03T19:25:12.345\"}");
+     ResponseEntity<Panel> response = template.postForEntity(
+-            "/api/panels/" + "232323" + "/hourly", panel, Panel.class);
++            "/api/panels/" + "1234567890123456" + "/hourly", panel, Panel.class);
+     Assert.assertEquals(200,response.getStatusCode().value());
+   }
+ 
+-- 
+2.7.4
+
+
+From cc513892123d489488e60412def576046ba292d9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 20:08:06 +0200
+Subject: [PATCH 04/13] Added constraint for panel serial length.
+XOV: XO_0_0_1
+
+---
+ src/main/java/com/crossover/techtrial/model/Panel.java | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/src/main/java/com/crossover/techtrial/model/Panel.java b/src/main/java/com/crossover/techtrial/model/Panel.java
+index 34fb762..75c9a74 100644
+--- a/src/main/java/com/crossover/techtrial/model/Panel.java
++++ b/src/main/java/com/crossover/techtrial/model/Panel.java
+@@ -1,13 +1,10 @@
+ package com.crossover.techtrial.model;
+ 
+ import java.io.Serializable;
+-import javax.persistence.Column;
+-import javax.persistence.Entity;
+-import javax.persistence.GeneratedValue;
+-import javax.persistence.GenerationType;
+-import javax.persistence.Id;
+-import javax.persistence.Table;
++import javax.persistence.*;
+ import javax.validation.constraints.NotNull;
++
++import org.hibernate.validator.constraints.Length;
+ import org.springframework.lang.Nullable;
+ 
+ /**
+@@ -27,6 +24,7 @@ public class Panel implements Serializable {
+   Long id;
+ 
+   @NotNull
++  @Length(min = 16, max = 16)
+   @Column(name = "serial")
+   String serial;
+ 
+-- 
+2.7.4
+
+
+From aa1fc1d89bacc38a18105f1f2fbe4819911a6c28 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 20:11:03 +0200
+Subject: [PATCH 05/13] Added tests for incorrect (too long and too short)
+ panel serial lenght.
+XOV: XO_0_0_1
+
+---
+ .../techtrial/controller/PanelControllerTest.java    | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+index b6a4146..6a88398 100644
+--- a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
++++ b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+@@ -53,6 +53,26 @@ public class PanelControllerTest {
+     Assert.assertEquals(202,response.getStatusCode().value());
+   }
+ 
++    @Test
++    public void testPanelShouldRespondWithErrorForTooLongSerial() throws Exception {
++        HttpEntity<Object> panel = getHttpEntity(
++                "{\"serial\": \"1234567890123456789\", \"longitude\": \"54.123232\","
++                        + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
++        ResponseEntity<Panel> response = template.postForEntity(
++                "/api/register", panel, Panel.class);
++        Assert.assertEquals(400,response.getStatusCode().value());
++    }
++
++    @Test
++    public void testPanelShouldRespondWithErrorForTooShortSerial() throws Exception {
++        HttpEntity<Object> panel = getHttpEntity(
++                "{\"serial\": \"12345678901234\", \"longitude\": \"54.123232\","
++                        + " \"latitude\": \"54.123232\",\"brand\":\"tesla\" }");
++        ResponseEntity<Panel> response = template.postForEntity(
++                "/api/register", panel, Panel.class);
++        Assert.assertEquals(400,response.getStatusCode().value());
++    }
++
+   @Test
+   public void testHourlyElectricityShouldBeSaved() throws Exception {
+     HttpEntity<Object> panel = getHttpEntity(
+-- 
+2.7.4
+
+
+From ef9241dcea764b6fa227b7ccddba7c0d28fdfda0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 20:14:34 +0200
+Subject: [PATCH 06/13] Fixed path-variable to "panel-serial" instead of
+ "banel-serial".
+XOV: XO_0_0_1
+
+---
+ src/main/java/com/crossover/techtrial/controller/PanelController.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/main/java/com/crossover/techtrial/controller/PanelController.java b/src/main/java/com/crossover/techtrial/controller/PanelController.java
+index d308f18..71f12b2 100644
+--- a/src/main/java/com/crossover/techtrial/controller/PanelController.java
++++ b/src/main/java/com/crossover/techtrial/controller/PanelController.java
+@@ -64,7 +64,7 @@ public class PanelController {
+   
+   @GetMapping(path = "/api/panels/{panel-serial}/hourly")
+   public ResponseEntity<?> hourlyElectricity(
+-      @PathVariable(value = "banel-serial") String panelSerial,
++      @PathVariable(value = "panel-serial") String panelSerial,
+       @PageableDefault(size = 5,value = 0) Pageable pageable) {
+     Panel panel = panelService.findBySerial(panelSerial);
+     if (panel == null) {
+-- 
+2.7.4
+
+
+From b6de213ac0e0bb966f693617532d63eca5d95938 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 20:27:09 +0200
+Subject: [PATCH 07/13] Added tests for get hourly electricity with correct and
+ incorrect panel serials.
+XOV: XO_0_0_1
+
+---
+ .../techtrial/controller/PanelControllerTest.java         | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+index 6a88398..cf5760f 100644
+--- a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
++++ b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+ import org.springframework.boot.test.web.client.TestRestTemplate;
++import org.springframework.data.domain.Page;
+ import org.springframework.http.HttpEntity;
+ import org.springframework.http.HttpHeaders;
+ import org.springframework.http.MediaType;
+@@ -83,6 +84,20 @@ public class PanelControllerTest {
+     Assert.assertEquals(200,response.getStatusCode().value());
+   }
+ 
++    @Test
++    public void testHourlyElectricityShouldBeReturnedforPanel() throws Exception {
++        ResponseEntity<Page> response = template.getForEntity(
++                "/api/panels/" + "1234567890123456" + "/hourly", Page.class);
++        Assert.assertEquals(200,response.getStatusCode().value());
++    }
++
++    @Test
++    public void testHourlyElectricityShouldRespondErrorForInvalidPanelSerial() throws Exception {
++        ResponseEntity<Page> response = template.getForEntity(
++                "/api/panels/" + "9999999999999999" + "/hourly", Page.class);
++        Assert.assertEquals(404,response.getStatusCode().value());
++    }
++
+   private HttpEntity<Object> getHttpEntity(Object body) {
+     HttpHeaders headers = new HttpHeaders();
+     headers.setContentType(MediaType.APPLICATION_JSON);
+-- 
+2.7.4
+
+
+From 453182309fc8e39384c624b43c33edc7138b5664 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 20:34:24 +0200
+Subject: [PATCH 08/13] Fixed hourly electricity saving to record the panel id
+ as well.
+XOV: XO_0_0_1
+
+---
+ src/main/java/com/crossover/techtrial/controller/PanelController.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/main/java/com/crossover/techtrial/controller/PanelController.java b/src/main/java/com/crossover/techtrial/controller/PanelController.java
+index 71f12b2..6e2be81 100644
+--- a/src/main/java/com/crossover/techtrial/controller/PanelController.java
++++ b/src/main/java/com/crossover/techtrial/controller/PanelController.java
+@@ -55,6 +55,7 @@ public class PanelController {
+   public ResponseEntity<?> saveHourlyElectricity(
+       @PathVariable(value = "panel-serial") String panelSerial, 
+       @RequestBody HourlyElectricity hourlyElectricity) {
++    hourlyElectricity.setPanel(panelService.findBySerial(panelSerial));
+     return ResponseEntity.ok(hourlyElectricityService.save(hourlyElectricity));
+   }
+    
+-- 
+2.7.4
+
+
+From 3687f1a980538fcea64f849bb22d594fae35660c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 22:14:28 +0200
+Subject: [PATCH 09/13] Added JPA query to find all hourly electricity without
+ pagination.
+XOV: XO_0_0_1
+
+---
+ .../crossover/techtrial/repository/HourlyElectricityRepository.java    | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/main/java/com/crossover/techtrial/repository/HourlyElectricityRepository.java b/src/main/java/com/crossover/techtrial/repository/HourlyElectricityRepository.java
+index b883493..774f5b3 100644
+--- a/src/main/java/com/crossover/techtrial/repository/HourlyElectricityRepository.java
++++ b/src/main/java/com/crossover/techtrial/repository/HourlyElectricityRepository.java
+@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
+ import org.springframework.data.repository.PagingAndSortingRepository;
+ import org.springframework.data.rest.core.annotation.RestResource;
+ 
++import java.util.List;
++
+ /**
+  * HourlyElectricity Repository is for all operations for HourlyElectricity.
+  * @author Crossover
+@@ -14,4 +16,5 @@ import org.springframework.data.rest.core.annotation.RestResource;
+ public interface HourlyElectricityRepository 
+     extends PagingAndSortingRepository<HourlyElectricity,Long> {
+   Page<HourlyElectricity> findAllByPanelIdOrderByReadingAtDesc(Long panelId,Pageable pageable);
++  List<HourlyElectricity> findAllByPanelIdOrderByReadingAtDesc(Long panelId);
+ }
+-- 
+2.7.4
+
+
+From 9d96ed30c1206fde75ab5ae755b3b4662ecf13f0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 22:15:08 +0200
+Subject: [PATCH 10/13] Added abstract method to get daily electricities by
+ panel.
+XOV: XO_0_0_1
+
+---
+ .../com/crossover/techtrial/service/HourlyElectricityService.java    | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/main/java/com/crossover/techtrial/service/HourlyElectricityService.java b/src/main/java/com/crossover/techtrial/service/HourlyElectricityService.java
+index 70c40b7..2143546 100644
+--- a/src/main/java/com/crossover/techtrial/service/HourlyElectricityService.java
++++ b/src/main/java/com/crossover/techtrial/service/HourlyElectricityService.java
+@@ -1,9 +1,12 @@
+ package com.crossover.techtrial.service;
+ 
++import com.crossover.techtrial.dto.DailyElectricity;
+ import com.crossover.techtrial.model.HourlyElectricity;
+ import org.springframework.data.domain.Page;
+ import org.springframework.data.domain.Pageable;
+ 
++import java.util.List;
++
+ /**
+  * HourlyElectricityService interface for all services realted to HourlyElectricity.
+  * @author Crossover
+@@ -13,4 +16,6 @@ public interface HourlyElectricityService {
+   HourlyElectricity save(HourlyElectricity hourlyElectricity);
+   
+   Page<HourlyElectricity> getAllHourlyElectricityByPanelId(Long panelId, Pageable pageable);
++
++  List<DailyElectricity> getDailyElectriciryByPanelId(Long panelId);
+ }
+-- 
+2.7.4
+
+
+From a44da95d9eda0f6d185df3a25a44e46a2d038de9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 22:16:41 +0200
+Subject: [PATCH 11/13] Added method implementation to get daily electricities
+ by panel, with an additional utility method to determine the min, max, sum
+ and avg values per day.
+XOV: XO_0_0_1
+
+---
+ .../service/HourlyElectricityServiceImpl.java      | 51 ++++++++++++++++++++++
+ 1 file changed, 51 insertions(+)
+
+diff --git a/src/main/java/com/crossover/techtrial/service/HourlyElectricityServiceImpl.java b/src/main/java/com/crossover/techtrial/service/HourlyElectricityServiceImpl.java
+index 6634e49..8b3f9a1 100644
+--- a/src/main/java/com/crossover/techtrial/service/HourlyElectricityServiceImpl.java
++++ b/src/main/java/com/crossover/techtrial/service/HourlyElectricityServiceImpl.java
+@@ -1,5 +1,6 @@
+ package com.crossover.techtrial.service;
+ 
++import com.crossover.techtrial.dto.DailyElectricity;
+ import com.crossover.techtrial.model.HourlyElectricity;
+ import com.crossover.techtrial.repository.HourlyElectricityRepository;
+ 
+@@ -8,6 +9,10 @@ import org.springframework.data.domain.Page;
+ import org.springframework.data.domain.Pageable;
+ import org.springframework.stereotype.Service;
+ 
++import java.time.LocalDate;
++import java.util.ArrayList;
++import java.util.List;
++
+ /**
+  * HourlyElectricityServiceImpl will handle electricity generated by a Panel.
+  *
+@@ -27,5 +32,51 @@ public class HourlyElectricityServiceImpl implements HourlyElectricityService {
+   public Page<HourlyElectricity> getAllHourlyElectricityByPanelId(Long panelId, Pageable pageable) {
+     return hourlyElectricityRepository.findAllByPanelIdOrderByReadingAtDesc(panelId, pageable);
+   }
++
++  public List<DailyElectricity> getDailyElectriciryByPanelId(Long panelId) {
++    List<HourlyElectricity> hourlyElectricityList = hourlyElectricityRepository.findAllByPanelIdOrderByReadingAtDesc(panelId);
++    List<DailyElectricity> dailyElectricityList = new ArrayList<>();
++
++    LocalDate currentDate = hourlyElectricityList.get(0).getReadingAt().toLocalDate();
++    List<HourlyElectricity> currentHourlyElecrticityList = new ArrayList<>();
++    for (HourlyElectricity electricity : hourlyElectricityList){
++      if (currentDate == LocalDate.now()){
++        continue;
++      }
++      if (currentDate.equals( electricity.getReadingAt().toLocalDate()) ){
++        currentHourlyElecrticityList.add(electricity);
++      } else {
++        dailyElectricityList.add(createDailyElectricity(currentHourlyElecrticityList));
++        currentHourlyElecrticityList.clear();
++        currentDate = electricity.getReadingAt().toLocalDate();
++        currentHourlyElecrticityList.add(electricity);
++      }
++    }
++    return dailyElectricityList;
++  }
++
++  private DailyElectricity createDailyElectricity(List<HourlyElectricity> hourlyElectricityList){
++    DailyElectricity result = new DailyElectricity();
++    result.setDate(hourlyElectricityList.get(0).getReadingAt().toLocalDate());
++    Long min = Long.MAX_VALUE;
++    Long max = Long.MIN_VALUE;
++    Long sum = 0L;
++    Double avg;
++    for (HourlyElectricity electricity : hourlyElectricityList){
++      if (max < electricity.getGeneratedElectricity()){
++        max = electricity.getGeneratedElectricity();
++      }
++      if (min > electricity.getGeneratedElectricity()){
++        min = electricity.getGeneratedElectricity();
++      }
++      sum += electricity.getGeneratedElectricity();
++    }
++    avg = (double)sum / (double)hourlyElectricityList.size();
++    result.setMin(min);
++    result.setMax(max);
++    result.setSum(sum);
++    result.setAverage(avg);
++    return result;
++  }
+   
+ }
+\ No newline at end of file
+-- 
+2.7.4
+
+
+From 0ae2c167c595926cd51fa11710995e934665dafe Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 22:17:38 +0200
+Subject: [PATCH 12/13] Implemented servlet method for all daily electricities
+ from yesterday.
+XOV: XO_0_0_1
+
+---
+ .../java/com/crossover/techtrial/controller/PanelController.java   | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/src/main/java/com/crossover/techtrial/controller/PanelController.java b/src/main/java/com/crossover/techtrial/controller/PanelController.java
+index 6e2be81..899ec7c 100644
+--- a/src/main/java/com/crossover/techtrial/controller/PanelController.java
++++ b/src/main/java/com/crossover/techtrial/controller/PanelController.java
+@@ -86,11 +86,8 @@ public class PanelController {
+   @GetMapping(path = "/api/panels/{panel-serial}/daily")
+   public ResponseEntity<List<DailyElectricity>> allDailyElectricityFromYesterday(
+       @PathVariable(value = "panel-serial") String panelSerial) {
+-    List<DailyElectricity> dailyElectricityForPanel = new ArrayList<>();
+-    /**
+-     * IMPLEMENT THE LOGIC HERE and FEEL FREE TO MODIFY OR ADD CODE TO RELATED CLASSES.
+-     * MAKE SURE NOT TO CHANGE THE SIGNATURE OF ANY END POINT. NO PAGINATION IS NEEDED HERE.
+-     */
++    Panel panel = panelService.findBySerial(panelSerial);
++    List<DailyElectricity> dailyElectricityForPanel = hourlyElectricityService.getDailyElectriciryByPanelId(panel.getId());
+     return ResponseEntity.ok(dailyElectricityForPanel);
+   }
+ }
+\ No newline at end of file
+-- 
+2.7.4
+
+
+From 0005174c7eabf3c8828caa046c60817d81f3357a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kov=C3=A1cs=20M=C3=A1t=C3=A9?= <kismate90@gmail.com>
+Date: Sun, 2 Sep 2018 22:18:33 +0200
+Subject: [PATCH 13/13] Fixed accepted response object type in tests.
+XOV: XO_0_0_1
+
+---
+ .../com/crossover/techtrial/controller/PanelControllerTest.java  | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+index cf5760f..3dcf11c 100644
+--- a/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
++++ b/src/test/java/com/crossover/techtrial/controller/PanelControllerTest.java
+@@ -1,5 +1,6 @@
+ package com.crossover.techtrial.controller;
+ 
++import com.crossover.techtrial.model.HourlyElectricity;
+ import com.crossover.techtrial.model.Panel;
+ import org.junit.Assert;
+ import org.junit.Before;
+@@ -86,15 +87,15 @@ public class PanelControllerTest {
+ 
+     @Test
+     public void testHourlyElectricityShouldBeReturnedforPanel() throws Exception {
+-        ResponseEntity<Page> response = template.getForEntity(
+-                "/api/panels/" + "1234567890123456" + "/hourly", Page.class);
++        ResponseEntity<HourlyElectricity> response = template.getForEntity(
++                "/api/panels/" + "1234567890123456" + "/hourly", HourlyElectricity.class);
+         Assert.assertEquals(200,response.getStatusCode().value());
+     }
+ 
+     @Test
+     public void testHourlyElectricityShouldRespondErrorForInvalidPanelSerial() throws Exception {
+-        ResponseEntity<Page> response = template.getForEntity(
+-                "/api/panels/" + "9999999999999999" + "/hourly", Page.class);
++        ResponseEntity<HourlyElectricity> response = template.getForEntity(
++                "/api/panels/" + "9999999999999999" + "/hourly", HourlyElectricity.class);
+         Assert.assertEquals(404,response.getStatusCode().value());
+     }
+ 
+-- 
+2.7.4
+
